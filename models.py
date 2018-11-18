@@ -6,9 +6,12 @@ import os
 import base64
 import onetimepass
 
-# create a new SQLAlchemy object
-db = SQLAlchemy()
 
+
+
+
+db = SQLAlchemy()
+# migrate = Migrate(app, db)
 
 # Base model that for other models to inherit from
 class Base(db.Model):
@@ -25,25 +28,25 @@ class Users(Base):
     email = db.Column(db.String(100), unique=True)
     username = db.Column(db.String(50), unique=True)
     password = db.Column(db.String(300))  # incase password hash becomes too long
+    otp_secret = db.Column(db.String(16))
 
     def __repr__(self):
         return self.username
 
-    # otp_secret = db.Column(db.String(16))
 
-    # def __init__(self, **kwargs):
-    #     super(User, self).__init__(**kwargs)
-    #     if self.otp_secret is None:
-    #         # generate a random secret
-    #         self.otp_secret = base64.b32encode(os.urandom(10)).decode('utf-8')
+    def __init__(self, **kwargs):
+        super(Users, self).__init__(**kwargs)
+        if self.otp_secret is None:
+            # generate a random secret
+            self.otp_secret = base64.b32encode(os.urandom(10)).decode('utf-8')
 
 
-    # def get_totp_uri(self):
-    #     return 'otpauth://totp/2FA-Demo:{0}?secret={1}&issuer=2FA-Demo' \
-    #         .format(self.username, self.otp_secret)
+    def get_totp_uri(self):
+        return 'otpauth://totp/2FA-Demo:{0}?secret={1}&issuer=2FA-Demo' \
+            .format(self.username, self.otp_secret)
 
-    # def verify_totp(self, token):
-    #     return onetimepass.valid_totp(token, self.otp_secret)
+    def verify_totp(self, token):
+        return onetimepass.valid_totp(token, self.otp_secret)
 
 
 # Model for poll topics

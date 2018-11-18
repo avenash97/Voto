@@ -12,7 +12,7 @@ import tkMessageBox
 from tkinter import messagebox
 # Blueprints
 from api.api import api
-
+import pyqrcode
 # celery factory
 import config
 from celery import Celery
@@ -83,22 +83,67 @@ def signup():
         # db.session.add(user)
         # db.session.commit()
 
-
         try:
             db.session.add(user)
             db.session.commit()
-        except exc.SQLAlchemyError:
+        except exc.SQLAlchemyError as e:
             #tkMessageBox.showerror("Error", "User Already Exists")
             root = Tk()
             root.withdraw()
-            messagebox.showerror("Error", "User Already Exists")
+            messagebox.showerror("Error", str(e))
 
+        
+
+        # return redirect(url_for('home'))
+        print('hello')
+        session['username'] = Users.username
+        print (redirect(url_for('two_factor_setup')))
+        return redirect(url_for('two_factor_setup'))
         flash('Thanks for signing up please login')
-
-        return redirect(url_for('home'))
-
     # it's a GET request, just render the template
+    #print(render_template('signup.html'))
     return render_template('signup.html')
+
+
+# Function for two factor setup
+@votr.route('/twofactor')
+def two_factor_setup():
+    print('inside')
+    print (session)
+    if 'username' not in session:
+        return redirect(url_for('home'))
+    user = Users.query.filter_by(username=session['username']).first()
+    if user is None:
+        return redirect(url_for('home'))
+    # since this page contains the sensitive qrcode, make sure the browser
+    # does not cache it
+    return render_template('two-factor-setup.html'), 200, {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'}
+
+
+# Function to generate QR Code
+@votr.route('/qrcode')
+def qrcode():
+    if 'username' not in session:
+        abort(404)
+    user = Users.query.filter_by(username=session['username']).first()
+    if user is None:
+        abort(404)
+
+    # for added security, remove username from session
+    del session['username']
+
+    # render qrcode for FreeTOTP
+    url = pyqrcode.create(user.get_totp_uri())
+    stream = BytesIO()
+    url.svg(stream, scale=5)
+    return stream.getvalue(), 200, {
+        'Content-Type': 'image/svg+xml',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'}
 
 
 @votr.route('/login', methods=['POST'])
@@ -108,14 +153,22 @@ def login():
 
     username = request.form['username']
     password = request.form['password']
-
+    token = request.form['token']
     # search the database for the User
     user = Users.query.filter_by(username=username).first()
 
+    # if form.validate_on_submit():
+    #     user = User.query.filter_by(username=form.username.data).first()
+    #     if user is None or not user.verify_password(form.password.data) or \
+    #             not user.verify_totp(form.token.data):
+    #         flash('Invalid username, password or token.')
+    #         return redirect(url_for('login'))
+
     if user:
         password_hash = user.password
+        submitted_token = user.token
 
-        if check_password_hash(password_hash, password):
+        if check_password_hash(password_hash, password) or user.verify_totp(token):
             # The hash matches the password in the database log the user in
             session['user'] = username
 
