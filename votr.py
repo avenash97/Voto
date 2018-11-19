@@ -7,15 +7,15 @@ from flask_admin import Admin
 from admin import AdminView, TopicView
 from sqlalchemy import exc
 import sys
-from Tkinter import *
-import tkMessageBox
-from tkinter import messagebox
+from tkinter import *
+# from tkinter import messagebox
 # Blueprints
 from api.api import api
 import pyqrcode
 # celery factory
 import config
 from celery import Celery
+from io import BytesIO
 
 
 def make_celery(votr):
@@ -92,12 +92,11 @@ def signup():
             root.withdraw()
             messagebox.showerror("Error", str(e))
 
-        
 
         # return redirect(url_for('home'))
         print('hello')
-        session['username'] = Users.username
-        print (redirect(url_for('two_factor_setup')))
+        session['username'] = request.form['username']
+        # print (redirect(url_for('two_factor_setup')))
         return redirect(url_for('two_factor_setup'))
         flash('Thanks for signing up please login')
     # it's a GET request, just render the template
@@ -154,6 +153,7 @@ def login():
     username = request.form['username']
     password = request.form['password']
     token = request.form['token']
+    print("------------\nToken-----------",token)
     # search the database for the User
     user = Users.query.filter_by(username=username).first()
 
@@ -166,9 +166,9 @@ def login():
 
     if user:
         password_hash = user.password
-        submitted_token = user.token
+        # submitted_token = user.token
 
-        if check_password_hash(password_hash, password) or user.verify_totp(token):
+        if check_password_hash(password_hash, password) and user.verify_totp(token):
             # The hash matches the password in the database log the user in
             session['user'] = username
 
