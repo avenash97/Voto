@@ -4,7 +4,7 @@ from models import db, Users, Polls, Topics, Options, UserPolls
 from flask import Blueprint, request, jsonify, session
 from datetime import datetime
 from config import SQLALCHEMY_DATABASE_URI
-
+import unicodedata
 if getenv('APP_MODE') == 'PRODUCTION':
     from production_settings import SQLALCHEMY_DATABASE_URI
 
@@ -116,10 +116,14 @@ def decrypt(pk, ciphertext):
 
 ##############################################################################################################################
 
+
+# BATCH = LOGIN; REDIRECT = /POLLS/BATCH; QUERY = BATCH
+
 @api.route('/polls', methods=['GET', 'POST'])
 # retrieves/adds polls from/to the database
 def api_polls():
     if request.method == 'POST':
+
         # get the poll and save it in the database
         poll = request.get_json()
 
@@ -129,6 +133,7 @@ def api_polls():
                 return jsonify({'message': 'value for {} is empty'.format(key)})
 
         title = poll['title']
+        batch = poll['batch']
         options_query = lambda option: Options.query.filter(Options.name.like(option))
 
         options = [Polls(option=Options(name=option))
@@ -136,8 +141,9 @@ def api_polls():
                    else Polls(option=options_query(option).first()) for option in poll['options']
                    ]
         eta = datetime.utcfromtimestamp(poll['close_date'])
-        new_topic = Topics(title=title, options=options, close_date=eta)
-
+        new_topic = Topics(title=title, poll_group=batch,options=options, close_date=eta)
+        #poll_group = Polls()
+        #db.session.add(poll_group)
         db.session.add(new_topic)
         db.session.commit()
 
@@ -150,7 +156,21 @@ def api_polls():
 
     else:
         # it's a GET request, return dict representations of the API
-        polls = Topics.query.filter_by(status=True).join(Polls).order_by(Topics.id.desc()).all()
+        user = session['user']
+        # print('User:', user)
+        user = unicodedata.normalize('NFKD', user).encode('ascii','ignore')
+        # print('UpdatedUser:', user)
+        user_info =  Users.query.filter_by(username=user).first()
+        # print('User Info: ', user_info)
+        user_type = unicodedata.normalize('NFKD', user_info.user_group).encode('ascii','ignore')
+        
+
+
+        polls = Topics.query.filter_by(status=True, poll_group=user_type).join(Polls).order_by(Topics.id.desc()).all()
+        all_polls = Topics.query.filter_by(status=True, poll_group='all').join(Polls).order_by(Topics.id.desc()).all()
+        for x in all_polls:
+            polls.append(x)
+        print(type(polls))
         all_polls = {'Polls':  [poll.to_json() for poll in polls]}
 
         return jsonify(all_polls)

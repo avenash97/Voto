@@ -32,12 +32,17 @@ var PollForm = React.createClass({
     close_date = close_date.getTime() / 1000;
 
 
-    return {title: '', option: '', options: [], close_date: close_date, all_options: []}
+    return {batch:'',title: '', option: '', options: [], close_date: close_date, all_options: []}
   },
 
   handleTitleChange: function(e){
     //change title as the user types
     this.setState({title: e.target.value});
+  },
+
+  handleBatchChange: function(e){
+    //change title as the user types
+    this.setState({batch: e.target.value});
   },
 
   handleOptionChange: function(e){
@@ -83,8 +88,9 @@ var PollForm = React.createClass({
     var title = this.state.title;
     var options = this.state.options;
     var close_date = this.state.close_date;
-
-    var data = {title: title,
+    var batch = this.state.batch;
+    var data = {batch:batch,
+                title: title,
                 options: options.map(function(x){return x.name}),
                 close_date: close_date
               };
@@ -102,7 +108,8 @@ var PollForm = React.createClass({
         alert(data.message);
       }.bind(this),
       error: function(xhr, status, err){
-        alert('Poll creation accomplished');
+        alert('Poll creation failed: ' + err.toString());
+        // alert('Poll created successfully');
       }.bind(this)
     });
   },
@@ -121,9 +128,15 @@ var PollForm = React.createClass({
         <h2 className="form-signin-heading" style={Align}>Create a poll</h2>
 
         <div className="form-group has-success">
+          <label htmlFor="batch" className="sr-only">Batch</label>
+          <input type="text" id="batch" name="batch" className="form-control" placeholder="Batch" onChange={this.handleBatchChange} required autoFocus />
+        </div>
+
+        <div className="form-group has-success">
           <label htmlFor="title" className="sr-only">Title</label>
           <input type="text" id="title" name="title" className="form-control" placeholder="Title" onChange={this.handleTitleChange} required autoFocus />
         </div>
+
 
         <div className="form-group has-success">
           <label htmlFor="option" className="sr-only">Option</label>

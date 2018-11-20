@@ -74,11 +74,12 @@ def signup():
         email = request.form['email']
         username = request.form['username']
         password = request.form['password']
+        usergroup = request.form['usergroup']
 
         # hash the password
         password = generate_password_hash(password)
 
-        user = Users(email=email, username=username, password=password)
+        user = Users(email=email, username=username, password=password, user_group=usergroup)
 
         # db.session.add(user)
         # db.session.commit()
@@ -156,7 +157,8 @@ def login():
     print("------------\nToken-----------",token)
     # search the database for the User
     user = Users.query.filter_by(username=username).first()
-
+    print('Votr_user', user)
+    print('User_passwoord',user.password)
     # if form.validate_on_submit():
     #     user = User.query.filter_by(username=form.username.data).first()
     #     if user is None or not user.verify_password(form.password.data) or \
@@ -165,14 +167,20 @@ def login():
     #         return redirect(url_for('login'))
 
     if user:
+        
         password_hash = user.password
         # submitted_token = user.token
-
+        print(check_password_hash(password_hash, password))
+        print(user.verify_totp(token))
         if check_password_hash(password_hash, password) and user.verify_totp(token):
             # The hash matches the password in the database log the user in
             session['user'] = username
-
+            # user_type = session['user']
+            # print (session, 'lol', type(session))
+            # print(user_type)
             flash('Login was succesfull')
+        else:
+            print('lol')
     else:
         # user wasn't found in the database
         flash('Username or password is incorrect please try again', 'error')

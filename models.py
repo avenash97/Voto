@@ -7,9 +7,6 @@ import base64
 import onetimepass
 
 
-
-
-
 db = SQLAlchemy()
 # migrate = Migrate(app, db)
 
@@ -29,6 +26,7 @@ class Users(Base):
     username = db.Column(db.String(50), unique=True)
     password = db.Column(db.String(300))  # incase password hash becomes too long
     otp_secret = db.Column(db.String(16))
+    user_group = db.Column(db.String(100))
 
     def __repr__(self):
         return self.username
@@ -52,6 +50,7 @@ class Users(Base):
 # Model for poll topics
 class Topics(Base):
     title = db.Column(db.String(500))
+    poll_group = db.Column(db.String(100))
     status = db.Column(db.Boolean, default=True)  # to mark poll as open or closed
     create_uid = db.Column(db.ForeignKey('users.id'))
     close_date = db.Column(db.DateTime)
@@ -109,16 +108,20 @@ class Polls(Base):
     topic_id = db.Column(db.Integer, db.ForeignKey('topics.id'))
     option_id = db.Column(db.Integer, db.ForeignKey('options.id'))
     vote_count = db.Column(db.Integer, default=0)
-
+    # poll_type = db.Column(db.String(100), db.ForeignKey('topics.poll_group')) 
+    
     # Relationship declaration (makes it easier for us to access the polls model
     # from the other models it's related to)
     topic = db.relationship('Topics', foreign_keys=[topic_id],
                             backref=db.backref('options', lazy='dynamic'))
+    # poll_batch = db.relationship('Topics', foreign_keys=[poll_type],
+                            # backref=db.backref('options', lazy='dynamic'))
     option = db.relationship('Options', foreign_keys=[option_id])
 
     def __repr__(self):
         # a user friendly way to view our objects in the terminal
         return self.option.name
+
 
 
 class UserPolls(Base):
