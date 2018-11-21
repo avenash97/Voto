@@ -7,8 +7,8 @@ from flask_admin import Admin
 from admin import AdminView, TopicView
 from sqlalchemy import exc
 import sys
-import tkinter
-# from tkinter import messagebox
+# import tkinter
+from tkinter import messagebox, Tk
 # Blueprints
 from api.api import api
 import pyqrcode
@@ -89,9 +89,9 @@ def signup():
             db.session.commit()
         except exc.SQLAlchemyError as e:
             #tkMessageBox.showerror("Error", "User Already Exists")
-            root = tkinter.Tk()
+            root = Tk()
             root.withdraw()
-            tkinter.messagebox.showerror("Error", str(e))
+            messagebox.showerror("Error", str(e))
 
 
         # return redirect(url_for('home'))
