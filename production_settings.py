@@ -5,6 +5,6 @@ import os
 DEBUG = False
 SECRET_KEY = 'production key'  # keep secret
 SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
-CELERY_BROKER = os.getenv('RABBITMQ_BIGWIG_RX_URL')
-CELERY_RESULT_BACKEND = 'amqp://'
+CELERY_BROKER = os.getenv('REDIS_URL')
+CELERY_RESULT_BACKEND = 'redis://'
 SQLALCHEMY_TRACK_MODIFICATIONS = False
