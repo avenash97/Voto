@@ -158,11 +158,12 @@ def api_polls():
         # it's a GET request, return dict representations of the API
         user = session['user']
         # print('User:', user)
-        user = unicodedata.normalize('NFKD', user).encode('ascii','ignore')
+        # user = unicodedata.normalize('NFKD', user).encode('ascii','ignore')
         # print('UpdatedUser:', user)
         user_info =  Users.query.filter_by(username=user).first()
         # print('User Info: ', user_info)
-        user_type = unicodedata.normalize('NFKD', user_info.user_group).encode('ascii','ignore')
+        # user_type = unicodedata.normalize('NFKD', user_info.user_group).encode('ascii','ignore')
+        user_type = user_info.user_group
         
 
 
